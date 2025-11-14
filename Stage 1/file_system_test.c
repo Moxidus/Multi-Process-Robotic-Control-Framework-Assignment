@@ -2,7 +2,8 @@
 #include "file_system_communication.h"
 
 
-void on_ready(){
+void on_ready(Data_Stream * context){
+    context->send_line(context, "Hello world\n");
     printf("Sending data\n");
 }
 
@@ -23,10 +24,6 @@ int main(){
     }
     
     update_stream();
-    update_stream();
-    update_stream();
-    update_stream();
-
 
     return 0;
 }

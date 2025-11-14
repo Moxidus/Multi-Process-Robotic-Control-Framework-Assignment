@@ -9,17 +9,22 @@
 #include <string.h>
 #include "file_system_communication.h"
 
-typedef struct
-{
-    bool is_active;
-    char stream_name[80];
-    void (*on_ready)();
-} Data_Stream;
+static int _open_file(Data_Stream * stream);
+static int _close_file(Data_Stream * stream);
+static int _create_flag(Data_Stream * stream);
+static void _set_new_empty_data_stream(Data_Stream * stream);
 
 bool is_initialized = false;
 int data_streams_size = 0;
 int started_streams = 0;
 Data_Stream *data_streams;
+
+/**
+ * 
+ */
+static void _send_line(Data_Stream * context, const char * line){
+    fprintf(context->file_ptr, line);
+}
 
 /**
  * Adds more memory for more streams
@@ -40,12 +45,20 @@ static int _add_data_streams(void)
 
     // initialize only the new chunk
     for (int i = old_size; i < new_size; ++i) {
-        data_streams[i].is_active = false;
-        data_streams[i].on_ready = NULL;
-        data_streams[i].stream_name[0] = '\0';
+        _set_new_empty_data_stream(&data_streams[i]);
     }
 
     return 0;
+}
+
+static void _set_new_empty_data_stream(Data_Stream * stream){
+        stream->is_active = false;
+        stream->on_ready = NULL;
+        stream->file_ptr = NULL;
+        stream->stream_name[0] = '\0';
+        stream->flag_file_path[0] = '\0';
+        stream->data_file_path[0] = '\0';
+        stream->send_line = _send_line;
 }
 
 int init_data_streams()
@@ -62,9 +75,7 @@ int init_data_streams()
 
     // initialize only the new chunk
     for (int i = 0; i < data_streams_size; ++i) {
-        data_streams[i].is_active = false;
-        data_streams[i].on_ready = NULL;
-        data_streams[i].stream_name[0] = '\0';
+        _set_new_empty_data_stream(&data_streams[i]);
     }
 
 
@@ -110,7 +121,7 @@ static Data_Stream *_get_new_stream()
  * and will invoke on_ready every time new frame can be sent
  * returns non zero if it fails
  */
-int create_new_data_stream(const char *stream_name, void (*on_ready)())
+int create_new_data_stream(const char *stream_name, void (*on_ready)(Data_Stream *))
 {
     if (!is_initialized)
     {
@@ -137,6 +148,19 @@ int create_new_data_stream(const char *stream_name, void (*on_ready)())
              "%s",
              stream_name);
 
+    snprintf(new_data_stream->data_file_path,
+        sizeof(new_data_stream->data_file_path),
+        "%s",
+        stream_name);
+    strcat(new_data_stream->data_file_path, ".txt");
+
+    
+    snprintf(new_data_stream->flag_file_path,
+        sizeof(new_data_stream->flag_file_path),
+        "%s",
+        stream_name);
+    strcat(new_data_stream->flag_file_path, ".flag");
+
     new_data_stream->on_ready = on_ready;
     new_data_stream->is_active = true;
 
@@ -153,8 +177,43 @@ void update_stream()
 
     // Invoke function for every new stream
     for (int i = 0; i < data_streams_size; ++i) {
-        if (data_streams[i].is_active && data_streams[i].on_ready != NULL)
-            data_streams[i].on_ready();
+        if (data_streams[i].is_active && data_streams[i].on_ready != NULL){
+
+            if(_open_file(&data_streams[i])){
+                // TODO: log failed to open the file
+                continue;
+            }
+
+            data_streams[i].on_ready(&data_streams[i]);
+
+            _close_file(&data_streams[i]);
+
+            _create_flag(&data_streams[i]);
+        }
     }
 
+}
+
+
+static int _open_file(Data_Stream * stream){
+    stream->file_ptr = fopen(stream->data_file_path, "w");
+
+    if(stream->file_ptr == NULL)
+        return 1; // TODO log error
+    return 0;
+}
+
+static int _close_file(Data_Stream * stream){
+    fclose(stream->file_ptr);
+    stream->file_ptr = NULL;
+}
+
+static int _create_flag(Data_Stream * stream){
+    FILE * temp = fopen(stream->flag_file_path, "w");
+    
+    if(temp == NULL)
+        return 1; // TODO log error
+
+    fclose(temp);
+    return 0;
 }
