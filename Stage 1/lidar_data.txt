@@ -1,0 +1,7 @@
+packet_id: 47
+verifier_code: 611
+angle_min: -1.06
+angle_max: 1.28
+range_0: 6.15
+range_1: 5.05
+range_2: 11.53
