@@ -1,7 +1,0 @@
-packet_id: 14
-verifier_code: 182
-angle_min: -1.45
-angle_max: 1.01
-range_0: 9.03
-range_1: 5.44
-range_2: 12.22

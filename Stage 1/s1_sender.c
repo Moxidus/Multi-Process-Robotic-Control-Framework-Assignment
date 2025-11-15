@@ -78,6 +78,11 @@ int main()
 
     while (1)
     {
+        // Wait for ACK by ready flag being deleted
+        if(file_exists(READY_FLAG)){
+            continue;
+        }
+
         //--- write new LIDAR data ---
         data_counter++;
 
