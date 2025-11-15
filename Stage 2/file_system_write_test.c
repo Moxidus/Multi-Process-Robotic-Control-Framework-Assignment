@@ -40,7 +40,7 @@ int main(){
     }
     
     
-    if(create_new_data_stream("lidar_data", WRITE, on_ready)){
+    if(create_new_data_stream("lidar_data", WRITE_ONLY_STREAM, on_ready)){
         printf("We failed to create new stream!\n");
         return 1;
     }

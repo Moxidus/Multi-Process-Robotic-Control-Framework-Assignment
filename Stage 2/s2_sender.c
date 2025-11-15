@@ -37,7 +37,7 @@
 void main_loop();
 void sending_data(Data_Stream * context);
 
-int data_counter = 0;
+static int data_counter = 0;
 
 int main()
 {
@@ -51,7 +51,7 @@ int main()
     }
     
     // We create the sending data stream with name sensor_lidar, and pass our handle function to the event handler
-    if(create_new_data_stream(LIDAR_STREAM_NAME, WRITE, sending_data)){
+    if(create_new_data_stream(LIDAR_STREAM_NAME, WRITE_ONLY_STREAM, sending_data)){
         fprintf(stderr, "We failed to create new stream!\n");
         return 1;
     }

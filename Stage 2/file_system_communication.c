@@ -8,7 +8,7 @@
  * move static properties to the bottom and sort them in a logical manner,
  * check that the codding styles matches the recommendation based on C Style Guidelines,
  * Make sure this version of the api implements all the requested features, test for bugs
- * 
+ *
  */
 
 #include <stdlib.h>
@@ -18,11 +18,10 @@
 #include <stdarg.h>
 #include "file_system_communication.h"
 
-
 static int _open_file_read(Data_Stream *stream);
 static int _open_file_write(Data_Stream *stream);
 static void _close_file(Data_Stream *stream);
-static void _set_new_empty_data_stream(Data_Stream *stream);
+static void _populate_data_stream_with_defaults(Data_Stream *stream);
 static void _remove_flag(Data_Stream *stream);
 static int _create_flag(Data_Stream *stream);
 static int _create_ack(Data_Stream *stream);
@@ -31,8 +30,14 @@ static int _is_data_ready(Data_Stream *stream);
 static int _was_data_read(Data_Stream *stream);
 static int _create_file(const char *file_path);
 static int _file_exists(const char *file_path);
-
-
+static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stream_type);
+static Data_Stream *_get_new_stream();
+static int _add_data_streams(void);
+static char *_read_line(Data_Stream *context, char *line_buffer, int max_count);
+static void _send_line(Data_Stream *context, const char *fmt, ...);
+static void _handle_write_protocol(Data_Stream *stream);
+static void _handle_read_protocol(Data_Stream *stream);
+static void _populate_stream_data(Data_Stream *stream, const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));
 
 static bool is_initialized = false;
 static int data_streams_size = 0;
@@ -81,17 +86,17 @@ static int _add_data_streams(void)
     // initialize only the new chunk
     for (int i = old_size; i < new_size; ++i)
     {
-        _set_new_empty_data_stream(&data_streams[i]);
+        _populate_data_stream_with_defaults(&data_streams[i]);
     }
 
     return 0;
 }
 
-static void _set_new_empty_data_stream(Data_Stream *stream)
+static void _populate_data_stream_with_defaults(Data_Stream *stream)
 {
     stream->is_active = false;
     stream->is_first_write = true;
-    stream->stream_type = READ;
+    stream->stream_type = READ_ONLY_STREAM;
     stream->on_ready = NULL;
     stream->file_ptr = NULL;
     stream->stream_name[0] = '\0';
@@ -116,7 +121,7 @@ int init_data_streams()
     // initialize only the new chunk
     for (int i = 0; i < data_streams_size; ++i)
     {
-        _set_new_empty_data_stream(&data_streams[i]);
+        _populate_data_stream_with_defaults(&data_streams[i]);
     }
 
     is_initialized = true;
@@ -155,10 +160,11 @@ static Data_Stream *_get_new_stream()
     return new_data_stream;
 }
 
-bool _is_stream_name_valid(const char *stream_name, enum Stream_type stream_type)
+static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stream_type)
 {
     // makes sure we don't overflow on the name
-    if(strlen(stream_name) >= MAX_NAME_LENGTH){
+    if (strlen(stream_name) >= MAX_NAME_LENGTH)
+    {
         return false;
     }
 
@@ -196,35 +202,29 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
     if (!new_data_stream)
         return 1; // TODO: log that stream failed to initialized
 
-    // Assign the stream name, in a safe way to prevent buffer overflow
-    snprintf(new_data_stream->stream_name,
-             sizeof(new_data_stream->stream_name),
-             "%s",
-             stream_name);
-
-    snprintf(new_data_stream->data_file_path,
-             sizeof(new_data_stream->data_file_path),
-             "%s",
-             stream_name);
-    strcat(new_data_stream->data_file_path, ".txt");
-
-    snprintf(new_data_stream->flag_file_path,
-             sizeof(new_data_stream->flag_file_path),
-             "%s",
-             stream_name);
-    strcat(new_data_stream->flag_file_path, ".flag");
-
-    snprintf(new_data_stream->ack_file_path,
-             sizeof(new_data_stream->ack_file_path),
-             "%s",
-             stream_name);
-    strcat(new_data_stream->ack_file_path, ".ack");
-
-    new_data_stream->on_ready = on_ready;
-    new_data_stream->stream_type = stream_type;
-    new_data_stream->is_active = true;
+    _populate_stream_data(new_data_stream, stream_name, stream_type, on_ready);
 
     return 0;
+}
+
+static void _populate_stream_data(Data_Stream *stream, const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *))
+{
+    // Assign the stream name, in a safe way to prevent buffer overflow
+    snprintf(stream->stream_name, sizeof(stream->stream_name), "%s", stream_name);
+
+    // generating the file names
+    snprintf(stream->data_file_path, sizeof(stream->data_file_path), "%s", stream_name);
+    strcat(stream->data_file_path, DATA_FILE_EXTENSION);
+
+    snprintf(stream->flag_file_path, sizeof(stream->flag_file_path), "%s", stream_name);
+    strcat(stream->flag_file_path, FLAG_FILE_EXTENSION);
+
+    snprintf(stream->ack_file_path, sizeof(stream->ack_file_path), "%s", stream_name);
+    strcat(stream->ack_file_path, ACK_FILE_EXTENSION);
+
+    stream->on_ready = on_ready;
+    stream->stream_type = stream_type;
+    stream->is_active = true;
 }
 
 /**
@@ -236,48 +236,57 @@ void update_stream()
     if (!is_initialized || !data_streams)
         return;
 
-    // Invoke function for every new stream
+    // Call the propper protocols for each data stream
     for (int i = 0; i < data_streams_size; ++i)
     {
-        if (data_streams[i].is_active && data_streams[i].on_ready != NULL)
+        // Skip inactive or un configured streams
+        if (!data_streams[i].is_active || data_streams[i].on_ready == NULL)
+            continue;
+
+        if (data_streams[i].stream_type == WRITE_ONLY_STREAM)
         {
-            if (data_streams[i].stream_type == WRITE)
-            {
-                if (_was_data_read(&data_streams[i]) || data_streams[i].is_first_write)
-                {
-                    data_streams[i].is_first_write = false;
-                    if (_open_file_write(&data_streams[i]))
-                    {
-                        // TODO: log failed to open the file
-                        continue;
-                    }
-
-                    data_streams[i].on_ready(&data_streams[i]);
-
-                    _close_file(&data_streams[i]);
-                    _create_flag(&data_streams[i]);
-                    _remove_ack(&data_streams[i]);
-                }
-            }
-            else if (data_streams[i].stream_type == READ)
-            {
-                if (_is_data_ready(&data_streams[i]))
-                {
-                    if (_open_file_read(&data_streams[i]))
-                    {
-                        // TODO: log failed to open the file
-                        continue;
-                    }
-
-                    data_streams[i].on_ready(&data_streams[i]);
-
-                    _close_file(&data_streams[i]);
-                    _create_ack(&data_streams[i]);
-                    _remove_flag(&data_streams[i]);
-                }
-            }
+            _handle_write_protocol(&data_streams[i]);
+        }
+        else if (data_streams[i].stream_type == READ_ONLY_STREAM)
+        {
+            _handle_read_protocol(&data_streams[i]);
         }
     }
+}
+
+static void _handle_write_protocol(Data_Stream *stream)
+{
+
+    if (!_was_data_read(stream) && !stream->is_first_write)
+        return;
+
+    stream->is_first_write = false;
+    if (_open_file_write(stream))
+        return; // TODO: log failed to open the file
+
+    stream->on_ready(stream);
+
+    _close_file(stream);
+    _create_flag(stream);
+    _remove_ack(stream);
+}
+
+static void _handle_read_protocol(Data_Stream *stream)
+{
+
+    if (!_is_data_ready(stream))
+        return;
+
+    if (_open_file_read(stream))
+        return; // TODO: handle failure to read a file
+
+    // event calling subscribed function
+    stream->on_ready(stream);
+
+    // Properly close handle closing and rasing flags
+    _close_file(stream);
+    _create_ack(stream);
+    _remove_flag(stream);
 }
 
 static int _is_data_ready(Data_Stream *stream)
@@ -295,7 +304,8 @@ static int _was_data_read(Data_Stream *stream)
  * filename is the name of the file to check.
  * file_exists return 1 if the file exists, 0 otherwise.
  */
-static int _file_exists(const char *file_path){
+static int _file_exists(const char *file_path)
+{
     FILE *file = fopen(file_path, "r");
     if (file)
     {

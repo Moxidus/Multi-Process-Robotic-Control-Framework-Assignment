@@ -1,18 +1,24 @@
 /*
- * file: receiver.c
- * Stage 1: Process B (nav_planner)
+ * file: s2_sender.c
+ * Stage 2: Two-way two process IPC
+ * Created by: Dominic, Karl
  *
- * This acts as the data consumer (Navigation Planner).
- * 1. Waits for the sender (Process A) to signal data is ready (by checking for data_ready.flag).
- * 2. Deletes the data_ready.flag (consumes the signal).
- * 3. Reads the data from lidar_data.txt.
+ * This acts as the data producer (LIDAR sensor).
+ * 1. Waits for lidar_data.ack from the receiver unless its the first invocation of the stream
+ * 2. Writes new simulated data to lidar_data.txt.
+ * 3. Creates lidar_data.flag to signal that new data is available.
  * 4. Repeats in a loop.
  *
- * This file-based owe way no ack IPC mechanism.
+ * This is over engineered implementation of the stage 2 solution.
+ * All the file manipulation and data management is abstracted away and handled by file_system_communication.c
+ * It gives us ability to send data, manage multiple sending and reading streams
+ * and prevents race conditions by using flags and acs
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include "file_system_communication.h"
 
 //cross-platform sleep
 #ifdef _WIN32
@@ -23,93 +29,71 @@
 #define sleep_ms(ms) usleep(ms * 1000)
 #endif
 
-//flag file names for communication
-#define DATA_FILE "lidar_data.txt"
-#define READY_FLAG "data_ready.flag"
+#define LIDAR_STREAM_NAME "lidar_data"
 
 //polling interval (ms)
 #define POLL_INTERVAL_MS 100
 
-/*
- * file_exists function Checks if a file exists.
- * filename is the name of the file to check.
- * file_exists return 1 if the file exists, 0 otherwise.
- */
-int file_exists(const char *filename)
+void main_loop();
+void receiving_data(Data_Stream *context);
+
+int main()
 {
-    FILE *file = fopen(filename, "r");
-    if (file)
-    {
-        fclose(file);
+    //seeding RNG
+    srand(time(NULL));
+
+    // Initializes the File System Communication Api
+    if(init_data_streams()){
+        fprintf(stderr, "We failed to initialize!\n");
         return 1;
     }
+    
+    // We create the sending data stream with name sensor_lidar, and pass our handle function to the event handler
+    if(create_new_data_stream(LIDAR_STREAM_NAME, READ_ONLY_STREAM, receiving_data)){
+        fprintf(stderr, "We failed to create new stream!\n");
+        return 1;
+    }
+
+    fprintf(stdout, "Process B (nav_planner) started.\n");
+    fprintf(stdout, "This process reads from %s using the File System Communication Api\n\n", LIDAR_STREAM_NAME);
+
+    // Calling the main loop, program will hold here until its terminated 
+    main_loop();
+
     return 0;
 }
 
-/*
- * create_file Creates an empty file.
- * filename is the name of the file to create.
+/**
+ * Main loop that loops through the main logic of the code
+ * with selected interval
  */
-void create_file(const char *filename)
-{
-    FILE *file = fopen(filename, "w");
-    if (file)
-    {
-        fclose(file);
-    }
-    else
-    {
-        fprintf(stderr, "Error creating file: %s\n", filename);
-    }
-}
-
-int main() {
-    char line_buffer[256]; //a buffer memory to read lines from the data file
-
-    printf("Process B (nav_planner) started.\n");
-    printf("This process reads from %s and waits for %s.\n\n", DATA_FILE, READY_FLAG);
-
+void main_loop(){
     while (1)
     {
-        //---wait for sender to be ready (till the data_ready.flag exists)---
-        printf("Waiting for new data (checking for %s)...\n", READY_FLAG);
-        while (!file_exists(READY_FLAG))
-        {
-            sleep_ms(POLL_INTERVAL_MS);
-        }
+        // Function provided by File System Communication Api that automatically invokes events when data is ready
+        update_stream();
 
-        //---consume the signal (and delete the flag file) ---
-        if (remove(READY_FLAG) != 0)
-        {
-            fprintf(stderr, "Warning: Could not remove %s. Retrying...\n", READY_FLAG);
-            continue; //retry the loop
-        }
-        printf("New data is ready. Deleting %s.\n", READY_FLAG);
-
-        //---read the data ---
-        printf("Reading data from %s...\n", DATA_FILE);
-        FILE *file = fopen(DATA_FILE, "r");
-        if (file == NULL)
-        {
-            fprintf(stderr, "Error: Could not open %s for reading.\n", DATA_FILE);
-            //wait for next loop without signaling ACK
-            sleep_ms(1000);
-            continue;
-        }
-
-        //read the file line by line and print it
-        printf("--- [DATA START] ---\n");
-        while (fgets(line_buffer, sizeof(line_buffer), file) != NULL)
-        {
-            printf("  %s", line_buffer); //print the line (includes newline)
-        }
-        printf("--- [DATA END] ---\n");
-        fclose(file);
-
-        //adding a small amount of processing time
-        sleep_ms(200);
-
+        // Set sensor refresh rate (here 1 Hz - 1 sample per second)
+        sleep_ms(POLL_INTERVAL_MS);
     }
+}
 
-    return 0;
+/**
+ * This function is automatically called by the File System Communication Api,
+ * when its the first call and when data has been read by the receiver.
+ * It generates mock data and sends them using the provided api
+ */
+void receiving_data(Data_Stream *context)
+{
+    char line_buffer[256]; //a buffer memory to read lines from the data file
+
+    //---read the data ---
+    fprintf(stdout, "Reading data from %s...\n", context->data_file_path);
+    
+    printf("--- [DATA START] ---\n");
+    while (context->read_line(context, line_buffer, sizeof(line_buffer)) != NULL)
+    {
+        printf("  %s", line_buffer); // print the line (includes newline)
+    }
+    printf("--- [DATA END] ---\n");
 }
