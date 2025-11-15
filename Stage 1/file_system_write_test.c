@@ -4,6 +4,8 @@
 
 void on_ready(Data_Stream * context){
     context->send_line(context, "Hello world\n");
+    context->send_line(context, "Hello world\n");
+    context->send_line(context, "Hello world\n");
     printf("Sending data\n");
 }
 
@@ -18,7 +20,7 @@ int main(){
     }
     
     
-    if(create_new_data_stream("Rover_Send", on_ready)){
+    if(create_new_data_stream("Rover_Send", WRITE, on_ready)){
         printf("We failed to create new stream!\n");
         return 1;
     }
