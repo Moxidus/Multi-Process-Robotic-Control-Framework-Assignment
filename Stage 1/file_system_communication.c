@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "file_system_communication.h"
 
 
@@ -18,9 +19,14 @@ Data_Stream *data_streams;
 /**
  * Function called by api users to write data to files
  */
-static void _send_line(Data_Stream *context, const char *line)
+static void _send_line(Data_Stream *context, const char *fmt, ...)
 {
-    fprintf(context->file_ptr, line);
+    va_list args;
+    va_start(args, fmt);
+
+    vfprintf(context->file_ptr, fmt, args);
+
+    va_end(args);
 }
 
 /**

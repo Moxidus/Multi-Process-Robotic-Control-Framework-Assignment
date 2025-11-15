@@ -1,7 +1,7 @@
-packet_id: 177
-verifier_code: 301
-angle_min: -1.63
-angle_max: 1.56
-range_0: 12.27
-range_1: 6.87
-range_2: 13.56
+packet_id: 14
+verifier_code: 182
+angle_min: -1.45
+angle_max: 1.01
+range_0: 9.03
+range_1: 5.44
+range_2: 12.22

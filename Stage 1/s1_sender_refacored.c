@@ -89,26 +89,12 @@ void sending_data(Data_Stream *context)
     double range_1 = 5.0 + (double)rand() / RAND_MAX * 10.0;
     double range_2 = 5.0 + (double)rand() / RAND_MAX * 10.0;
 
-    char buffer[254];
-
-    snprintf(buffer, sizeof(buffer), "packet_id: %d\n", data_counter);
-    context->send_line(context, buffer);
-
-    snprintf(buffer, sizeof(buffer), "verifier_code: %d\n", verifier_code);
-    context->send_line(context, buffer);
-
-    snprintf(buffer, sizeof(buffer), "angle_min: %.2f\n", angle_min);
-    context->send_line(context, buffer);
-
-    snprintf(buffer, sizeof(buffer), "angle_max: %.2f\n", angle_max);
-    context->send_line(context, buffer);
-
-    snprintf(buffer, sizeof(buffer), "range_0: %.2f\n", range_0);
-    context->send_line(context, buffer);
-
-    snprintf(buffer, sizeof(buffer), "range_1: %.2f\n", range_1);
-    context->send_line(context, buffer);
-
-    snprintf(buffer, sizeof(buffer), "range_2: %.2f\n", range_2);
-    context->send_line(context, buffer);
+    
+    context->send_line(context, "packet_id: %d\n", data_counter);
+    context->send_line(context, "verifier_code: %d\n", verifier_code);
+    context->send_line(context, "angle_min: %.2f\n", angle_min);
+    context->send_line(context, "angle_max: %.2f\n", angle_max);
+    context->send_line(context, "range_0: %.2f\n", range_0);
+    context->send_line(context, "range_1: %.2f\n", range_1);
+    context->send_line(context, "range_2: %.2f\n", range_2);
 }

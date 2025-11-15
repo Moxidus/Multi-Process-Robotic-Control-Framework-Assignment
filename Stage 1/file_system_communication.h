@@ -20,7 +20,7 @@ typedef struct Data_Stream
     char ack_file_path[84];
     FILE * file_ptr;
     void (*on_ready)(struct Data_Stream *);
-    void (*send_line)(struct Data_Stream *, const char *);
+    void (*send_line)(struct Data_Stream *, const char *fmt, ...);
     char * (*read_line)(struct Data_Stream *, char *, int);
 } Data_Stream;
 
