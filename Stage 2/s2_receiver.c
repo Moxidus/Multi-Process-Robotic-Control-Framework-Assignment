@@ -1,15 +1,15 @@
 /*
- * file: s2_sender.c
+ * file: s2_receiver.c
  * Stage 2: Two-way two process IPC
  * Created by: Dominic, Karl
  *
- * This acts as the data producer (LIDAR sensor).
- * 1. Waits for lidar_data.ack from the receiver unless its the first invocation of the stream
- * 2. Writes new simulated data to lidar_data.txt.
- * 3. Creates lidar_data.flag to signal that new data is available.
+ * This acts as the data consumer (Navigation Planner).
+ * 1. Waits for the sender (Process A) to signal data is ready (by checking for data_ready.flag).
+ * 2. Deletes the data_ready.flag (consumes the signal).
+ * 3. Reads the data from lidar_data.txt.
  * 4. Repeats in a loop.
  *
- * This is over engineered implementation of the stage 2 solution.
+ * This is over engineered implementation of the stage 2 solution for receiver.
  * All the file manipulation and data management is abstracted away and handled by file_system_communication.c
  * It gives us ability to send data, manage multiple sending and reading streams
  * and prevents race conditions by using flags and acs
