@@ -2,6 +2,14 @@
  * This file creates simple api that abstracts communication via file system
  * between programs to simple api like calls
  */
+/**
+ * TODO: Implement propper logging, add comments, add file description, declare all fuction prototypes,
+ * add descriptions to all fuctions, split large functions,
+ * move static properties to the bottom and sort them in a logical manner,
+ * check that the codding styles matches the recommendation based on C Style Guidelines,
+ * Make sure this version of the api implements all the requested features, test for bugs
+ * 
+ */
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -11,10 +19,25 @@
 #include "file_system_communication.h"
 
 
-bool is_initialized = false;
-int data_streams_size = 0;
-int started_streams = 0;
-Data_Stream *data_streams;
+static int _open_file_read(Data_Stream *stream);
+static int _open_file_write(Data_Stream *stream);
+static void _close_file(Data_Stream *stream);
+static void _set_new_empty_data_stream(Data_Stream *stream);
+static void _remove_flag(Data_Stream *stream);
+static int _create_flag(Data_Stream *stream);
+static int _create_ack(Data_Stream *stream);
+static void _remove_ack(Data_Stream *stream);
+static int _is_data_ready(Data_Stream *stream);
+static int _was_data_read(Data_Stream *stream);
+static int _create_file(const char *file_path);
+static int _file_exists(const char *file_path);
+
+
+
+static bool is_initialized = false;
+static int data_streams_size = 0;
+static int started_streams = 0;
+static Data_Stream *data_streams;
 
 /**
  * Function called by api users to write data to files
@@ -106,7 +129,7 @@ int init_data_streams()
  */
 int close_data_streams()
 {
-    // make sure to properly close all streams
+    // TODO: make sure to properly close all streams
     free(data_streams);
     data_streams = NULL;
     data_streams_size = 0;
@@ -134,6 +157,11 @@ static Data_Stream *_get_new_stream()
 
 bool _is_stream_name_valid(const char *stream_name, enum Stream_type stream_type)
 {
+    // makes sure we don't overflow on the name
+    if(strlen(stream_name) >= MAX_NAME_LENGTH){
+        return false;
+    }
+
     // Make sure there is no stream with the same name
     for (int i = 0; i < data_streams_size; ++i)
     {
@@ -231,7 +259,7 @@ void update_stream()
                     _remove_ack(&data_streams[i]);
                 }
             }
-            else if (data_streams->stream_type == READ)
+            else if (data_streams[i].stream_type == READ)
             {
                 if (_is_data_ready(&data_streams[i]))
                 {
@@ -305,7 +333,7 @@ static int _open_file_read(Data_Stream *stream)
     return 0;
 }
 
-static int _close_file(Data_Stream *stream)
+static void _close_file(Data_Stream *stream)
 {
     fclose(stream->file_ptr);
     stream->file_ptr = NULL;

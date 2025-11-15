@@ -18,7 +18,6 @@
 void loop();
 
 void on_ready(Data_Stream * context){
-    // context->send_line(context, "Hello world\n");
     char line_buffer[256];
     while (context->read_line(context, line_buffer, sizeof(line_buffer)))
     {
