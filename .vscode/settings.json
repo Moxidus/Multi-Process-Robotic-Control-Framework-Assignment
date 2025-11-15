@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "*.embeddedhtml": "html",
-        "file_system_communication.h": "c"
-    }
-}
