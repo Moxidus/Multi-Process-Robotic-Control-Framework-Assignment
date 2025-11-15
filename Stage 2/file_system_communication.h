@@ -13,7 +13,8 @@
 
 #define STRLEN_LITERAL(x) (sizeof(x) - 1)
 
-enum Stream_type {
+enum Stream_type
+{
     READ_ONLY_STREAM,
     WRITE_ONLY_STREAM
 };
@@ -26,11 +27,25 @@ typedef struct Data_Stream
     char stream_name[MAX_NAME_LENGTH];
     char data_file_path[MAX_NAME_LENGTH + STRLEN_LITERAL(DATA_FILE_EXTENSION)]; // stream name + .txt
     char flag_file_path[MAX_NAME_LENGTH + STRLEN_LITERAL(FLAG_FILE_EXTENSION)]; // stream name + .flag
-    char ack_file_path[MAX_NAME_LENGTH + STRLEN_LITERAL(ACK_FILE_EXTENSION)]; // stream name + .ack
-    FILE * file_ptr;
+    char ack_file_path[MAX_NAME_LENGTH + STRLEN_LITERAL(ACK_FILE_EXTENSION)];   // stream name + .ack
+    FILE *data_file_ptr;
     void (*on_ready)(struct Data_Stream *);
+    /**
+     * Function called by api users to write data to file system. Behaves same as fprintf.
+     * \param context contains all the function calls and provides necessary context for the function to be executed on the right files
+     * \param fmt format string
+     * \param ... parameters specified in format string
+     */
     void (*send_line)(struct Data_Stream *, const char *fmt, ...);
-    char * (*read_line)(struct Data_Stream *, char *, int);
+    /**
+     * Function called by api users to read data from file system. Behaves same as fgets. writes data to buffer
+     * until buffer size is reached or until EOF is reached
+     * \param context contains all the function calls and provides necessary context for the function to be executed on the right files
+     * \param line_buffer string to which data will be written
+     * \param max_count size of the buffer
+     * \return returns null of EOF was reached
+     */
+    char *(*read_line)(struct Data_Stream *, char *, int);
 } Data_Stream;
 
 int create_new_data_stream(const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));

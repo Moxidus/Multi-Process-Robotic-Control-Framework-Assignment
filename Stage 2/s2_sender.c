@@ -32,7 +32,7 @@
 #define LIDAR_STREAM_NAME "lidar_data"
 
 //polling interval (ms)
-#define POLL_INTERVAL_MS 100
+#define POLL_INTERVAL_MS 1000
 
 void main_loop();
 void sending_data(Data_Stream * context);

@@ -32,7 +32,7 @@
 #define LIDAR_STREAM_NAME "lidar_data"
 
 //polling interval (ms)
-#define POLL_INTERVAL_MS 100
+#define POLL_INTERVAL_MS 1000
 
 void main_loop();
 void receiving_data(Data_Stream *context);
@@ -88,7 +88,7 @@ void receiving_data(Data_Stream *context)
     char line_buffer[256]; //a buffer memory to read lines from the data file
 
     //---read the data ---
-    fprintf(stdout, "Reading data from %s...\n", context->data_file_path);
+    fprintf(stdout, "\n\nReading data from %s...\n", context->data_file_path);
     
     printf("--- [DATA START] ---\n");
     while (context->read_line(context, line_buffer, sizeof(line_buffer)) != NULL)
