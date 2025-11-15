@@ -29,6 +29,9 @@ typedef struct Data_Stream
     char flag_file_path[MAX_NAME_LENGTH + STRLEN_LITERAL(FLAG_FILE_EXTENSION)]; // stream name + .flag
     char ack_file_path[MAX_NAME_LENGTH + STRLEN_LITERAL(ACK_FILE_EXTENSION)];   // stream name + .ack
     FILE *data_file_ptr;
+    /**
+     * Event subscription 
+     */
     void (*on_ready)(struct Data_Stream *);
     /**
      * Function called by api users to write data to file system. Behaves same as fprintf.
