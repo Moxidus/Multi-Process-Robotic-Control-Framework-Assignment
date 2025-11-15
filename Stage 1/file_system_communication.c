@@ -9,18 +9,6 @@
 #include <string.h>
 #include "file_system_communication.h"
 
-static int _open_file_read(Data_Stream *stream);
-static int _open_file_write(Data_Stream *stream);
-static int _close_file(Data_Stream *stream);
-static void _set_new_empty_data_stream(Data_Stream *stream);
-static void _remove_flag(Data_Stream *stream);
-static int _create_flag(Data_Stream *stream);
-static int _create_ack(Data_Stream *stream);
-static void _remove_ack(Data_Stream *stream);
-static int _create_file(const char *file_path);
-static int _is_data_ready(Data_Stream *stream);
-static int _was_data_read(Data_Stream *stream);
-static int _file_exists(const char *file_path);
 
 bool is_initialized = false;
 int data_streams_size = 0;
@@ -221,7 +209,7 @@ void update_stream()
         {
             if (data_streams[i].stream_type == WRITE)
             {
-                if (_is_data_ready(&data_streams[i]) || data_streams[i].is_first_write)
+                if (_was_data_read(&data_streams[i]) || data_streams[i].is_first_write)
                 {
                     data_streams[i].is_first_write = false;
                     if (_open_file_write(&data_streams[i]))
