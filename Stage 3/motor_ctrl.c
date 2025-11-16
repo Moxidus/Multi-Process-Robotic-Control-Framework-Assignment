@@ -41,6 +41,9 @@ int main()
 {
     //seeding RNG
     srand(time(NULL));
+    
+    // Enable logging for File System Communication Api
+    set_file_system_com_api_logging(true);
 
     // Initializes the File System Communication Api
     if(init_data_streams()){

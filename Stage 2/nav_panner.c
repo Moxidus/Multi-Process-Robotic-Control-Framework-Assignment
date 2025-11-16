@@ -1,33 +1,18 @@
-/*
- * file: nav_panner.c
- * Stage 2: Two-way two process IPC
- * Created by: Dominic, Karl
- *
- * This acts as the data consumer (Navigation Planner).
- * 1. Waits for the sender (Process A) to signal data is ready (by checking for data_ready.flag).
- * 2. Deletes the data_ready.flag (consumes the signal).
- * 3. Reads the data from lidar_data.txt.
- * 4. Repeats in a loop.
- *
- * This is over engineered implementation of the stage 2 solution for receiver.
- * All the file manipulation and data management is abstracted away and handled by file_system_communication.c
- * It gives us ability to send data, manage multiple sending and reading streams
- * and prevents race conditions by using flags and acs
- */
-
+/*******************************************************************************
+* Title                 :   Navigation Planner
+* Filename              :   nav_panner.c
+* Author                :   Dominic, Karl
+* Origin Date           :   14/11/2025
+* Version               :   0.0.1
+* Notes                 :   This is over engineered implementation of the stage 2 solution for Navigation planner.
+*                           All the file manipulation and data management is abstracted away and handled by file_system_communication.c
+*                           It gives us ability to send data, manage multiple sending and reading streams
+*                           and prevents race conditions by using flags and acks.
+*******************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include "file_system_communication.h"
-
-//cross-platform sleep
-#ifdef _WIN32
-#include <windows.h>
-#define sleep_ms(ms) Sleep(ms)
-#else
-#include <unistd.h>
-#define sleep_ms(ms) usleep(ms * 1000)
-#endif
+#include "time_macros.h"
 
 #define LIDAR_STREAM_NAME "lidar_data"
 
@@ -41,6 +26,9 @@ int main()
 {
     //seeding RNG
     srand(time(NULL));
+    
+    // Enable logging for File System Communication Api
+    set_file_system_com_api_logging(true);
 
     // Initializes the File System Communication Api
     if(init_data_streams()){

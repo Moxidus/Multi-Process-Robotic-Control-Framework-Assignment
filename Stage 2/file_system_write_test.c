@@ -57,7 +57,7 @@ void loop(){
 
         update_stream();
 
-        sleep_ms(1000);
+        sleep_ms(POLL_INTERVAL_MS);
     }
 }
 

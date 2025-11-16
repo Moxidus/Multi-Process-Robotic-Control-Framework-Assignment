@@ -8,8 +8,7 @@
  *                           between programs to simple API like calls.
  *                           It utilizes event based calling of subscribed functions
  * TODO:
- * Known issues          :   Need to implement propper logging
- *                           Need to check that the codding styles matches the recommendation based on C Style Guidelines
+ * Known issues          :   Need to check that the codding styles matches the recommendation based on C Style Guidelines
  *                           Make sure this version of the api implements all the requested features
  *                           Test for bugs
  *******************************************************************************/
@@ -23,6 +22,7 @@
 
 #define DATA_STREAM_ARRAY_CHUNK 10
 
+static bool logging_enabled = false;
 static bool is_initialized = false;
 static int data_streams_size = 0;
 static int started_streams = 0;
@@ -50,20 +50,36 @@ static int _create_file(const char *file_path);
 static bool _file_exists(const char *file_path);
 
 /**
+ * Enables or disables logging within the File System Communication API
+ * \param enabled true to enable logging, false to disable
+ */
+void set_file_system_com_api_logging(bool enabled)
+{
+    logging_enabled = enabled;
+}
+
+/**
  * Requests memory for data streams and enables the Files system communication API
  * \return 0 if all goes well otherwise 1
  */
 int init_data_streams()
 {
     if (is_initialized)
-        return 1; // TODO: add loging with warning that steam was already initialzed
+    {
+        _log_error("WARNING: Data streams already initialized\n");
+        return 1;
+    }
 
     data_streams_size = DATA_STREAM_ARRAY_CHUNK;
     started_streams = 0;
+    // Pre allocate space for next DATA_STREAM_ARRAY_CHUNK streams
+    data_streams = (Data_Stream *)malloc(sizeof(Data_Stream) * data_streams_size);
 
-    data_streams = (Data_Stream *)malloc(sizeof(Data_Stream) * data_streams_size); // Pre allocate space for next DATA_STREAM_ARRAY_CHUNK streams
     if (!data_streams)
-        return 1; // TODO log failed to init
+    {
+        _log_error("ERROR: Failed to initialize data streams\n");
+        return 1;
+    }
 
     // initialize only the new chunk
     for (int i = 0; i < data_streams_size; ++i)
@@ -101,7 +117,8 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
 {
     if (!is_initialized)
     {
-        return 1; // TODO: log that we couldn't initialize the new stream
+        _log_error("ERROR: Data streams not initialized\n");
+        return 1;
     }
 
     if (!_is_stream_name_valid(stream_name, stream_type))
@@ -111,7 +128,10 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
 
     Data_Stream *new_data_stream = _get_new_stream();
     if (!new_data_stream)
+    {
+        _log_error("ERROR: Failed to create new data stream\n");
         return 1; // TODO: log that stream failed to initialized
+    }
 
     _populate_stream_data(new_data_stream, stream_name, stream_type, on_ready);
 
@@ -125,7 +145,10 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
 void update_stream()
 {
     if (!is_initialized || !data_streams)
+    {
+        _log_error("ERROR: Data streams not initialized or null\n");
         return;
+    }
 
     // Call the propper protocols for each data stream
     for (int i = 0; i < data_streams_size; ++i)
@@ -185,7 +208,7 @@ static int _add_data_streams(void)
     Data_Stream *tmp = realloc(data_streams, sizeof(Data_Stream) * new_size);
     if (!tmp)
     {
-        // TODO log failed to init
+        _log_error("ERROR: Failed to reallocate memory for data streams\n");
         return -1;
     }
 
@@ -228,7 +251,8 @@ static Data_Stream *_get_new_stream()
     {
         if (_add_data_streams())
         {
-            return NULL; // TODO: log failure to log
+            _log_error("ERROR: Failed to add more data streams\n");
+            return NULL;
         }
     }
 
@@ -249,6 +273,7 @@ static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stre
     // makes sure we don't overflow on the name
     if (strlen(stream_name) >= MAX_NAME_LENGTH)
     {
+        _log_error("ERROR: Stream name exceeds maximum length\n");
         return false;
     }
 
@@ -258,6 +283,7 @@ static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stre
         // will return null if stream with same name is found in the list
         if (data_streams[i].is_active && data_streams[i].stream_type == stream_type && !strcmp(data_streams[i].stream_name, stream_name))
         {
+            _log_error("ERROR: Stream with the same name and type already exists\n");
             return false; // TODO: log that stream already exists
         }
     }
@@ -306,7 +332,10 @@ static void _handle_write_protocol(Data_Stream *stream)
 
     stream->is_first_write = false;
     if (_open_data_write(stream))
-        return; // TODO: log failed to open the file
+    {
+        _log_error("ERROR: Failed to open data file %s for writing\n", stream->data_file_path);
+        return;
+    }
 
     stream->on_ready(stream);
 
@@ -330,7 +359,10 @@ static void _handle_read_protocol(Data_Stream *stream)
         return;
 
     if (_open_data_read(stream))
-        return; // TODO: handle failure to read a file
+    {
+        _log_error("ERROR: Failed to open data file %s for reading\n", stream->data_file_path);
+        return;
+    }
 
     // event calling subscribed function
     stream->on_ready(stream);
@@ -370,7 +402,7 @@ static int _open_data_write(Data_Stream *stream)
     stream->data_file_ptr = fopen(stream->data_file_path, "w");
 
     if (stream->data_file_ptr == NULL)
-        return 1; // TODO log error
+        return 1;
     return 0;
 }
 
@@ -383,7 +415,7 @@ static int _open_data_read(Data_Stream *stream)
     stream->data_file_ptr = fopen(stream->data_file_path, "r");
 
     if (stream->data_file_ptr == NULL)
-        return 1; // TODO log error
+        return 1;
     return 0;
 }
 
@@ -439,7 +471,10 @@ static int _create_file(const char *file_path)
     FILE *temp = fopen(file_path, "w");
 
     if (temp == NULL)
-        return 1; // TODO log error
+    {
+        _log_error("ERROR: Failed to create file %s\n", file_path);
+        return 1;
+    }
 
     fclose(temp);
     return 0;
@@ -459,4 +494,36 @@ static bool _file_exists(const char *file_path)
         return true;
     }
     return false;
+}
+
+/**
+ * Informative logging function, ignores if logging is disabled
+ */
+void _log_informative(const char *fmt, ...)
+{
+    if (!logging_enabled)
+        return;
+
+    va_list args;
+    va_start(args, fmt);
+
+    vfprintf(stdout, fmt, args);
+
+    va_end(args);
+}
+
+/**
+ * Error logging function, ignores if logging is disabled
+ */
+void _log_error(const char *fmt, ...)
+{
+    if (!logging_enabled)
+        return;
+
+    va_list args;
+    va_start(args, fmt);
+
+    vfprintf(stderr, fmt, args);
+
+    va_end(args);
 }

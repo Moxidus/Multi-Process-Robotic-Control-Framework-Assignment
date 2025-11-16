@@ -1,48 +1,41 @@
-/*
- * file: sensor_lidar.c
- * Stage 2: Two-way two process IPC
- * Created by: Dominic, Karl
- *
- * This acts as the data producer (LIDAR sensor).
- * 1. Waits for lidar_data.ack from the receiver unless its the first invocation of the stream
- * 2. Writes new simulated data to lidar_data.txt.
- * 3. Creates lidar_data.flag to signal that new data is available.
- * 4. Repeats in a loop.
- *
- * This is over engineered implementation of the stage 2 solution.
- * All the file manipulation and data management is abstracted away and handled by file_system_communication.c
- * It gives us ability to send data, manage multiple sending and reading streams
- * and prevents race conditions by using flags and acs
- */
-
+/*******************************************************************************
+* Title                 :   Sensor LIDAR
+* Filename              :   sensor_lidar.c
+* Author                :   Dominic, Karl
+* Origin Date           :   14/11/2025
+* Version               :   0.0.1
+* Notes                 :   This is over engineered implementation of the stage 2 solution.
+*                           All the file manipulation and data management is abstracted away and handled by file_system_communication.c
+*                           It gives us ability to send data, manage multiple sending and reading streams
+*                           and prevents race conditions by using flags and acs
+*                           1. Waits for lidar_data.ack from the receiver unless its the first invocation of the stream
+*                           2. Writes new simulated data to lidar_data.txt.
+*                           3. Creates lidar_data.flag to signal that new data is available.
+*                           4. Repeats in a loop.
+*******************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include "time_macros.h"
 #include "file_system_communication.h"
-
-//cross-platform sleep
-#ifdef _WIN32
-#include <windows.h>
-#define sleep_ms(ms) Sleep(ms)
-#else
-#include <unistd.h>
-#define sleep_ms(ms) usleep(ms * 1000)
-#endif
 
 #define LIDAR_STREAM_NAME "lidar_data"
 
 //polling interval (ms)
 #define POLL_INTERVAL_MS 1000
 
+static int data_counter = 0;
+
 void main_loop();
 void sending_data(Data_Stream * context);
 
-static int data_counter = 0;
 
 int main()
 {
     //seeding RNG
     srand(time(NULL));
+    
+    // Enable logging for File System Communication Api
+    set_file_system_com_api_logging(true);
 
     // Initializes the File System Communication Api
     if(init_data_streams()){

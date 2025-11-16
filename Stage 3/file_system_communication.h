@@ -1,5 +1,13 @@
-#ifndef FILE_SYS_COM
-#define FILE_SYS_COM
+/****************************************************************************
+* Title                 :   File System Communication API  
+* Filename              :   file_system_communication.h
+* Author                :   Dominic
+* Origin Date           :   14/11/2025
+* Version               :   0.0.1
+* Notes                 :   none
+*****************************************************************************/
+#ifndef FILE_SYS_COM_H
+#define FILE_SYS_COM_H
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -51,9 +59,11 @@ typedef struct Data_Stream
     char *(*read_line)(struct Data_Stream *, char *, int);
 } Data_Stream;
 
+void set_file_system_com_api_logging(bool enabled);
 int create_new_data_stream(const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));
 int close_data_streams();
 int init_data_streams();
 void update_stream();
+
 
 #endif
