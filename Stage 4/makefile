@@ -11,11 +11,11 @@ BUILD_DIR := build
 # object directory
 OBJ_DIR := $(BUILD_DIR)\obj
 # exe directory
-BIN_DIR := $(BUILD_DIR)\\bin
+BIN_DIR := $(BUILD_DIR)\bin
 
 
 # Source files
-SRCS := mutex_logging.c file_system_communication.c nav_panner.c sensor_lidar.c motor_ctrl.c
+SRCS := file_system_communication.c nav_panner.c sensor_lidar.c motor_ctrl.c mutex_logging.c mutex_logging_test.c
 
 # Objects stored in build/obj
 OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)
@@ -24,10 +24,11 @@ OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)
 NAV_PLANNER := $(BIN_DIR)/nav_panner.exe
 SENSOR_LIDAR := $(BIN_DIR)/sensor_lidar.exe
 MOTOR_CTRL := $(BIN_DIR)/motor_ctrl.exe
+MUTEX_LOGGING_TEST := $(BIN_DIR)/mutex_logging_test.exe
 
-.PHONY: all clean dirs nav_panner sensor_lidar motor_ctrl
+.PHONY: all clean dirs nav_panner sensor_lidar motor_ctrl test_mutex_logging
 
-# Build everything
+# Build everything except for test_mutex_logging
 all: dirs $(NAV_PLANNER) $(SENSOR_LIDAR) $(MOTOR_CTRL)
 
 # Build only nav_panner
@@ -42,6 +43,9 @@ sensor_lidar: dirs $(SENSOR_LIDAR)
 motor_ctrl: dirs $(MOTOR_CTRL)
 	@echo Built $(MOTOR_CTRL)
 
+# Build only test_mutex_logging
+mutex_logging_test: dirs $(MUTEX_LOGGING_TEST)
+	@echo Built $(MUTEX_LOGGING_TEST)
 
 dirs:
 	if not exist $(OBJ_DIR) mkdir $(OBJ_DIR)
@@ -59,8 +63,12 @@ $(SENSOR_LIDAR): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/sensor_lidar.
 $(MOTOR_CTRL): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/motor_ctrl.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-# Generic object file rule
-$(OBJ_DIR)/%.o: %.c file_system_communication.h | dirs
+# Build test_mutex_logging
+$(MUTEX_LOGGING_TEST): $(OBJ_DIR)/mutex_logging.o $(OBJ_DIR)/mutex_logging_test.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+# Generic object file rule fixed to include mutex_logging.h dependency
+$(OBJ_DIR)/%.o: %.c file_system_communication.h mutex_logging.h | dirs
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
