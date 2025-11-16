@@ -15,29 +15,29 @@ BIN_DIR := $(BUILD_DIR)\\bin
 
 
 # Source files
-SRCS := file_system_communication.c s2_receiver.c s2_sender.c
+SRCS := file_system_communication.c nav_panner.c sensor_lidar.c
 
 # Objects stored in build/obj
 OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)
 
 # Executables are stored in build/bin
-RECEIVER := $(BIN_DIR)/s2_receiver.exe
-SENDER   := $(BIN_DIR)/s2_sender.exe
+NAV_PLANNER := $(BIN_DIR)/nav_panner.exe
+SENSOR_LIDAR   := $(BIN_DIR)/sensor_lidar.exe
 
 .PHONY: all clean dirs
 
-all: dirs $(RECEIVER) $(SENDER)
+all: dirs $(NAV_PLANNER) $(SENSOR_LIDAR)
 
 dirs:
 	if not exist $(OBJ_DIR) mkdir $(OBJ_DIR)
 	if not exist $(BIN_DIR) mkdir $(BIN_DIR)
 
-# Build receiver
-$(RECEIVER): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/s2_receiver.o
+# Build nav_panner
+$(NAV_PLANNER): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/nav_panner.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-# Build sender
-$(SENDER): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/s2_sender.o
+# Build sensor_lidar
+$(SENSOR_LIDAR): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/sensor_lidar.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Generic object file rule

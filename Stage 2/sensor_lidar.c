@@ -1,5 +1,5 @@
 /*
- * file: s2_sender.c
+ * file: sensor_lidar.c
  * Stage 2: Two-way two process IPC
  * Created by: Dominic, Karl
  *

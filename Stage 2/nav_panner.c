@@ -1,5 +1,5 @@
 /*
- * file: s2_receiver.c
+ * file: nav_panner.c
  * Stage 2: Two-way two process IPC
  * Created by: Dominic, Karl
  *
