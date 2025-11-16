@@ -15,7 +15,7 @@ BIN_DIR := $(BUILD_DIR)\\bin
 
 
 # Source files
-SRCS := file_system_communication.c nav_panner.c sensor_lidar.c motor_ctrl.c
+SRCS := mutex_logging.c file_system_communication.c nav_panner.c sensor_lidar.c motor_ctrl.c
 
 # Objects stored in build/obj
 OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)

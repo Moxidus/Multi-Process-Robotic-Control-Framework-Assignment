@@ -1,2 +1,8 @@
 .vscode/
 */build/*
+*.cbp
+*.depend
+*.layout
+*.flag
+*.ack
+*.txt
