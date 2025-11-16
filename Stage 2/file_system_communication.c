@@ -48,6 +48,8 @@ static int _create_ack(Data_Stream *stream);
 static void _remove_ack(Data_Stream *stream);
 static int _create_file(const char *file_path);
 static bool _file_exists(const char *file_path);
+void _log_informative(const char *fmt, ...);
+void _log_error(const char *fmt, ...);
 
 /**
  * Enables or disables logging within the File System Communication API
@@ -501,15 +503,15 @@ static bool _file_exists(const char *file_path)
  */
 void _log_informative(const char *fmt, ...)
 {
-    if (!logging_enabled)
-        return;
+    if (logging_enabled)
+    {
+        va_list args;
+        va_start(args, fmt);
 
-    va_list args;
-    va_start(args, fmt);
+        vfprintf(stdout, fmt, args);
 
-    vfprintf(stdout, fmt, args);
-
-    va_end(args);
+        va_end(args);
+    }
 }
 
 /**
@@ -517,13 +519,13 @@ void _log_informative(const char *fmt, ...)
  */
 void _log_error(const char *fmt, ...)
 {
-    if (!logging_enabled)
-        return;
+    if (logging_enabled)
+    {
+        va_list args;
+        va_start(args, fmt);
 
-    va_list args;
-    va_start(args, fmt);
+        vfprintf(stderr, fmt, args);
 
-    vfprintf(stderr, fmt, args);
-
-    va_end(args);
+        va_end(args);
+    }
 }
