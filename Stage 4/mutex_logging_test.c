@@ -9,5 +9,6 @@
 int main()
 {
     // write your test code here
+    printf("Mutex logging test executed.\n");
     return 0;
 }

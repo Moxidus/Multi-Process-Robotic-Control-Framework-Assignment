@@ -43,7 +43,7 @@ typedef struct Data_Stream
     void (*on_ready)(struct Data_Stream *);
     /**
      * Function called by api users to write data to file system. Behaves same as fprintf.
-     * \param context contains all the function calls and provides necessary context for the function to be executed on the right files
+     * \param context contains all the function calls and provides necessary context for the function to be executed on the right files. Guaranteed lifetime is only until next update_stream call
      * \param fmt format string
      * \param ... parameters specified in format string
      */

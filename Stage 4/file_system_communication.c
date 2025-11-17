@@ -6,11 +6,16 @@
  * Version               :   0.0.1
  * Notes                 :   This file creates simple API that abstracts communication via file system
  *                           between programs to simple API like calls.
- *                           It utilizes event based calling of subscribed functions
+ *                           It utilizes callbacks of subscribed functions.
+ *                           Single threaded implementation only.
  * TODO:
- * Known issues          :   Need to check that the codding styles matches the recommendation based on C Style Guidelines
- *                           Make sure this version of the api implements all the requested features
- *                           Test for bugs
+ * Known issues          :   -Need to check that the codding styles matches the recommendation based on C Style Guidelines
+ *                           -Make sure this version of the api implements all the requested features
+ *                           -Test for bugs
+ *                           -Need to implement data stream removal function
+ *                           -Create data stream should return pointer to created stream for easier management, except there might
+ *                           be issue with relocation and use after free, since we are using dynamic array that can be reallocated.
+ *                           Consider changing to linked list or fixed max number of streams, to fix it. (or ignore since its already over engineered)
  *******************************************************************************/
 
 #include <stdlib.h>
@@ -37,7 +42,7 @@ static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stre
 static void _populate_stream_data(Data_Stream *stream, const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));
 static void _handle_write_protocol(Data_Stream *stream);
 static void _handle_read_protocol(Data_Stream *stream);
-static int _is_data_ready(Data_Stream *stream);
+static bool _is_data_ready(Data_Stream *stream);
 static bool _was_data_read(Data_Stream *stream);
 static int _open_data_read(Data_Stream *stream);
 static int _open_data_write(Data_Stream *stream);
@@ -136,7 +141,8 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
     }
 
     _populate_stream_data(new_data_stream, stream_name, stream_type, on_ready);
-
+    
+    _log_informative("INFO: Created new data stream with name %s\n", stream_name);
     return 0;
 }
 
@@ -152,8 +158,9 @@ void update_stream()
         return;
     }
 
+    _log_informative("INFO: Calling each data stream\n");
     // Call the propper protocols for each data stream
-    for (int i = 0; i < data_streams_size; ++i)
+    for (int i = 0; i < started_streams; ++i)
     {
         // Skip inactive or un configured streams
         if (!data_streams[i].is_active || data_streams[i].on_ready == NULL)
@@ -302,16 +309,13 @@ static void _populate_stream_data(Data_Stream *stream, const char *stream_name, 
     snprintf(stream->stream_name, sizeof(stream->stream_name), "%s", stream_name);
 
     // generating the dat file name
-    snprintf(stream->data_file_path, sizeof(stream->data_file_path), "%s", stream_name);
-    strcat(stream->data_file_path, DATA_FILE_EXTENSION);
+    snprintf(stream->data_file_path, sizeof(stream->data_file_path), "%s%s", stream_name, DATA_FILE_EXTENSION);
 
     // generating the flag file name
-    snprintf(stream->flag_file_path, sizeof(stream->flag_file_path), "%s", stream_name);
-    strcat(stream->flag_file_path, FLAG_FILE_EXTENSION);
+    snprintf(stream->flag_file_path, sizeof(stream->flag_file_path), "%s%s", stream_name, FLAG_FILE_EXTENSION);
 
     // generating the ack file name
-    snprintf(stream->ack_file_path, sizeof(stream->ack_file_path), "%s", stream_name);
-    strcat(stream->ack_file_path, ACK_FILE_EXTENSION);
+    snprintf(stream->flag_file_path, sizeof(stream->flag_file_path), "%s%s", stream_name, ACK_FILE_EXTENSION);
 
     stream->on_ready = on_ready;
     stream->stream_type = stream_type;
@@ -339,6 +343,8 @@ static void _handle_write_protocol(Data_Stream *stream)
         return;
     }
 
+    _log_informative("INFO: Data file %s opened for writing\n", stream->data_file_path);
+    // event calling subscribed function
     stream->on_ready(stream);
 
     _close_data(stream);
@@ -366,6 +372,7 @@ static void _handle_read_protocol(Data_Stream *stream)
         return;
     }
 
+    _log_informative("INFO: Data file %s opened for reading\n", stream->data_file_path);
     // event calling subscribed function
     stream->on_ready(stream);
 
@@ -380,7 +387,7 @@ static void _handle_read_protocol(Data_Stream *stream)
  * \param stream contains name of the flag file
  * \return true if the filename.flag exists, false otherwise.
  */
-static int _is_data_ready(Data_Stream *stream)
+static bool _is_data_ready(Data_Stream *stream)
 {
     return _file_exists(stream->flag_file_path);
 }
@@ -515,17 +522,15 @@ void _log_informative(const char *fmt, ...)
 }
 
 /**
- * Error logging function, ignores if logging is disabled
+ * Error logging function
  */
 void _log_error(const char *fmt, ...)
 {
-    if (logging_enabled)
-    {
-        va_list args;
-        va_start(args, fmt);
 
-        vfprintf(stderr, fmt, args);
+    va_list args;
+    va_start(args, fmt);
 
-        va_end(args);
-    }
+    vfprintf(stderr, fmt, args);
+
+    va_end(args);
 }

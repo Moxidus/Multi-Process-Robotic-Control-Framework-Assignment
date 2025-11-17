@@ -1,5 +1,11 @@
 # Multi Process Robotic Control Framework Assignment
-Assignment for Robotics programming
+This assignment implements most of the functionality in file_system_communication for the stage 2 and 3. And implements all Mutex logging features in the mutex_logging.
+These frameworks are then imported into the nav_planner sensor_lidar and motor_ctrl.
+building is done using gcc and make.
+
+## Requirements
+- make
+- gcc c99 compiler
 
 ## Building the project
 1. navigate to any stage of the project:
