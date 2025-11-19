@@ -6,6 +6,7 @@ building is done using gcc and make.
 ## Requirements
 - make
 - gcc c99 compiler
+- add these binaries to the environment variables
 
 ## Building the project
 1. navigate to any stage of the project:
