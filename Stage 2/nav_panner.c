@@ -27,10 +27,10 @@ int main()
     //seeding RNG
     srand(time(NULL));
     
-    // Enable logging for File System Communication Api
-    set_file_system_com_api_logging(true);
+    // Enable logging for File System Communication framework
+    set_file_system_com_framework_logging(true);
 
-    // Initializes the File System Communication Api
+    // Initializes the File System Communication framework
     if(init_data_streams()){
         fprintf(stderr, "We failed to initialize!\n");
         return 1;
@@ -43,7 +43,7 @@ int main()
     }
 
     fprintf(stdout, "Process B (nav_planner) started.\n");
-    fprintf(stdout, "This process reads from %s using the File System Communication Api\n\n", LIDAR_STREAM_NAME);
+    fprintf(stdout, "This process reads from %s using the File System Communication framework\n\n", LIDAR_STREAM_NAME);
 
     // Calling the main loop, program will hold here until its terminated 
     main_loop();
@@ -58,8 +58,8 @@ int main()
 void main_loop(){
     while (1)
     {
-        // Function provided by File System Communication Api that automatically invokes events when data is ready
-        update_stream();
+        // Function provided by File System Communication framework that automatically invokes events when data is ready
+        update_streams();
 
         // Set sensor refresh rate (here 1 Hz - 1 sample per second)
         sleep_ms(POLL_INTERVAL_MS);
@@ -67,9 +67,9 @@ void main_loop(){
 }
 
 /**
- * This function is automatically called by the File System Communication Api,
+ * This function is automatically called by the File System Communication framework,
  * when its the first call and when data has been read by the receiver.
- * It generates mock data and sends them using the provided api
+ * It generates mock data and sends them using the provided framework
  */
 void receiving_data(Data_Stream *context)
 {

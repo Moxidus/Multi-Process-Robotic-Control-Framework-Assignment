@@ -150,7 +150,7 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
  * Calls the appropriate protocol for each data stream if they are active once
  * Place in a loop to call continuously
  */
-void update_stream()
+void update_streams()
 {
     if (!is_initialized || !data_streams)
     {

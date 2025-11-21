@@ -1,16 +1,16 @@
 /*******************************************************************************
- * Title                 :   File System Communication API
+ * Title                 :   File System Communication framework
  * Filename              :   file_system_communication.c
  * Author                :   Dominic
  * Origin Date           :   14/11/2025
  * Version               :   0.0.1
- * Notes                 :   This file creates simple API that abstracts communication via file system
+ * Notes                 :   This file creates simple framework that abstracts communication via file system
  *                           between programs to simple API like calls.
  *                           It utilizes callbacks of subscribed functions.
  *                           Single threaded implementation only.
  * TODO:
  * Known issues          :   -Need to check that the codding styles matches the recommendation based on C Style Guidelines
- *                           -Make sure this version of the api implements all the requested features
+ *                           -Make sure this version of the framework implements all the requested features
  *                           -Test for bugs
  *                           -Need to implement data stream removal function
  *                           -Create data stream should return pointer to created stream for easier management, except there might
@@ -57,16 +57,16 @@ void _log_informative(const char *fmt, ...);
 void _log_error(const char *fmt, ...);
 
 /**
- * Enables or disables logging within the File System Communication API
+ * Enables or disables logging within the File System Communication framework
  * \param enabled true to enable logging, false to disable
  */
-void set_file_system_com_api_logging(bool enabled)
+void set_file_system_com_framework_logging(bool enabled)
 {
     logging_enabled = enabled;
 }
 
 /**
- * Requests memory for data streams and enables the Files system communication API
+ * Requests memory for data streams and enables the Files system communication framework
  * \return 0 if all goes well otherwise 1
  */
 int init_data_streams()
@@ -150,7 +150,7 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
  * Calls the appropriate protocol for each data stream if they are active once
  * Place in a loop to call continuously
  */
-void update_stream()
+void update_streams()
 {
     if (!is_initialized || !data_streams)
     {
@@ -178,7 +178,7 @@ void update_stream()
 }
 
 /**
- * Function called by api users to write data to file system. Behaves same as fprintf.
+ * Function called by framework users to write data to file system. Behaves same as fprintf.
  * \param context contains all the function calls and provides necessary context for the function to be executed on the right files
  * \param fmt format string
  * \param ... parameters specified in format string
@@ -194,7 +194,7 @@ static void _send_line(Data_Stream *context, const char *fmt, ...)
 }
 
 /**
- * Function called by api users to read data from file system. Behaves same as fgets. writes data to buffer
+ * Function called by framework users to read data from file system. Behaves same as fgets. writes data to buffer
  * until buffer size is reached or until EOF is reached
  * \param context contains all the function calls and provides necessary context for the function to be executed on the right files
  * \param line_buffer string to which data will be written

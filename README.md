@@ -18,3 +18,37 @@ cd stage 2
 make all
 ```
 3. navigate to 'build/bin' to find the executables of all programs
+
+
+## Examples
+example on how to use File system communication framework
+```
+int main()
+{
+    // Initializes the File System Communication framework
+    init_data_streams()
+    
+    // We create the write data stream
+    create_new_data_stream("unique_name", WRITE_ONLY_STREAM, sending_data)
+
+    while (1)
+    {
+        // Function provided by File System Communication framework that automatically invokes events when data is ready
+        update_streams();
+
+        sleep_ms(1000);
+    }
+
+    return 0;
+}
+
+// this function is going to be called by 
+void sending_data(Data_Stream *context)
+{
+    int number;
+    context->send_line(context, "data: %d\n", number);
+    context->send_line(context, "end of data");
+}
+
+
+```

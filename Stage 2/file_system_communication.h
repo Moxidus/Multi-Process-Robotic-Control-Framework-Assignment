@@ -1,5 +1,5 @@
 /****************************************************************************
-* Title                 :   File System Communication API  
+* Title                 :   File System Communication framework  
 * Filename              :   file_system_communication.h
 * Author                :   Dominic
 * Origin Date           :   14/11/2025
@@ -42,14 +42,14 @@ typedef struct Data_Stream
      */
     void (*on_ready)(struct Data_Stream *);
     /**
-     * Function called by api users to write data to file system. Behaves same as fprintf.
-     * \param context contains all the function calls and provides necessary context for the function to be executed on the right files. Guaranteed lifetime is only until next update_stream call
+     * Function called by framework users to write data to file system. Behaves same as fprintf.
+     * \param context contains all the function calls and provides necessary context for the function to be executed on the right files. Guaranteed lifetime is only until next update_streams call
      * \param fmt format string
      * \param ... parameters specified in format string
      */
     void (*send_line)(struct Data_Stream *, const char *fmt, ...);
     /**
-     * Function called by api users to read data from file system. Behaves same as fgets. writes data to buffer
+     * Function called by framework users to read data from file system. Behaves same as fgets. writes data to buffer
      * until buffer size is reached or until EOF is reached
      * \param context contains all the function calls and provides necessary context for the function to be executed on the right files
      * \param line_buffer string to which data will be written
@@ -59,11 +59,11 @@ typedef struct Data_Stream
     char *(*read_line)(struct Data_Stream *, char *, int);
 } Data_Stream;
 
-void set_file_system_com_api_logging(bool enabled);
+void set_file_system_com_framework_logging(bool enabled);
 int create_new_data_stream(const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));
 int close_data_streams();
 int init_data_streams();
-void update_stream();
+void update_streams();
 
 
 #endif

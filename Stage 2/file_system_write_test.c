@@ -45,7 +45,7 @@ int main(){
         return 1;
     }
     
-    // update_stream();
+    // update_streams();
     loop();
 
     return 0;
@@ -55,7 +55,7 @@ void loop(){
     while (1)
     {
 
-        update_stream();
+        update_streams();
 
         sleep_ms(POLL_INTERVAL_MS);
     }

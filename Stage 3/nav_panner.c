@@ -83,7 +83,7 @@ void main_loop(){
     while (1)
     {
         // Function provided by File System Communication framework that automatically invokes events when data is ready
-        update_stream();
+        update_streams();
 
         // Set sensor refresh rate (here 1 Hz - 1 sample per second)
         sleep_ms(POLL_INTERVAL_MS);
