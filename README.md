@@ -24,10 +24,7 @@ make all
 example on how to use File system communication framework
 ```
 int main()
-{
-    // Initializes the File System Communication framework
-    init_data_streams()
-    
+{    
     // We create the write data stream
     create_new_data_stream("unique_name", WRITE_ONLY_STREAM, sending_data)
 
