@@ -48,12 +48,6 @@ int main()
     
     // Enable logging for File System Communication framework
     set_file_system_com_framework_logging(true);
-
-    // Initializes the File System Communication framework
-    if(init_data_streams()){
-        fprintf(stderr, "We failed to initialize!\n");
-        return 1;
-    }
     
     // We create the sending data stream with name sensor_lidar, and pass our handle function to the event handler
     if(create_new_data_stream(LIDAR_STREAM_NAME, READ_ONLY_STREAM, receiving_data)){

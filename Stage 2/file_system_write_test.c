@@ -1,3 +1,5 @@
+/* test is dissabled for now */
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include "file_system_communication.h"
@@ -17,14 +19,8 @@
 void loop();
 
 void on_ready(Data_Stream * context){
-    static int data_counter = 0;
-    data_counter++;
-    int verifier_code = data_counter * 13 % 1000;
 
-    char buffer[100];
-    snprintf(buffer, sizeof(buffer), "packet_id: %d\n", data_counter);
-
-    context->send_line(context, buffer);
+    context->send_line(context, "test data line \n");
 
     printf("Sending data\n");
 }
@@ -33,14 +29,8 @@ void on_ready(Data_Stream * context){
 int main(){
 
     printf("We have compiled!\n");
-
-    if(init_data_streams()){
-        printf("We failed to initialize!\n");
-        return 1;
-    }
     
-    
-    if(create_new_data_stream("lidar_data", WRITE_ONLY_STREAM, on_ready)){
+    if(create_new_data_stream("test_data", WRITE_ONLY_STREAM, on_ready)){
         printf("We failed to create new stream!\n");
         return 1;
     }
@@ -61,3 +51,4 @@ void loop(){
     }
 }
 
+*/

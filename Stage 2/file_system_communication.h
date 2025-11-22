@@ -29,6 +29,7 @@ enum Stream_type
 
 typedef struct Data_Stream
 {
+    struct Data_Stream * next;
     bool is_active;
     bool is_first_write;
     enum Stream_type stream_type;
@@ -62,7 +63,6 @@ typedef struct Data_Stream
 void set_file_system_com_framework_logging(bool enabled);
 int create_new_data_stream(const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));
 int close_data_streams();
-int init_data_streams();
 void update_streams();
 
 

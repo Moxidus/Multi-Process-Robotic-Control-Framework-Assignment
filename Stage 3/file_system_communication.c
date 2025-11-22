@@ -5,7 +5,7 @@
  * Origin Date           :   14/11/2025
  * Version               :   0.0.1
  * Notes                 :   This file creates simple framework that abstracts communication via file system
- *                           between programs to simple framework like calls.
+ *                           between programs to simple API like calls.
  *                           It utilizes callbacks of subscribed functions.
  *                           Single threaded implementation only.
  * TODO:
@@ -25,19 +25,13 @@
 #include <stdarg.h>
 #include "file_system_communication.h"
 
-#define DATA_STREAM_ARRAY_CHUNK 10
-
 static bool logging_enabled = false;
-static bool is_initialized = false;
-static int data_streams_size = 0;
-static int started_streams = 0;
-static Data_Stream *data_streams;
+static Data_Stream *head_data_stream = NULL;
 
 static void _send_line(Data_Stream *context, const char *fmt, ...);
 static char *_read_line(Data_Stream *context, char *line_buffer, int max_count);
-static int _add_data_streams(void);
+static Data_Stream * _add_data_stream(void);
 static void _populate_data_stream_with_defaults(Data_Stream *stream);
-static Data_Stream *_get_new_stream();
 static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stream_type);
 static void _populate_stream_data(Data_Stream *stream, const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));
 static void _handle_write_protocol(Data_Stream *stream);
@@ -66,49 +60,20 @@ void set_file_system_com_framework_logging(bool enabled)
 }
 
 /**
- * Requests memory for data streams and enables the Files system communication framework
- * \return 0 if all goes well otherwise 1
- */
-int init_data_streams()
-{
-    if (is_initialized)
-    {
-        _log_error("WARNING: Data streams already initialized\n");
-        return 1;
-    }
-
-    data_streams_size = DATA_STREAM_ARRAY_CHUNK;
-    started_streams = 0;
-    // Pre allocate space for next DATA_STREAM_ARRAY_CHUNK streams
-    data_streams = (Data_Stream *)malloc(sizeof(Data_Stream) * data_streams_size);
-
-    if (!data_streams)
-    {
-        _log_error("ERROR: Failed to initialize data streams\n");
-        return 1;
-    }
-
-    // initialize only the new chunk
-    for (int i = 0; i < data_streams_size; ++i)
-    {
-        _populate_data_stream_with_defaults(&data_streams[i]);
-    }
-
-    is_initialized = true;
-    return 0;
-}
-
-/**
  * Will safely close all data streams and return memory
  * \return 0 on success
  */
 int close_data_streams()
 {
-    free(data_streams);
-    data_streams = NULL;
-    data_streams_size = 0;
-    started_streams = 0;
-    is_initialized = false;
+    // free all linked list nodes
+    Data_Stream *current = head_data_stream;
+    while (current != NULL) {
+        Data_Stream *next = current->next;
+        free(current);
+        current = next;
+    }
+
+    head_data_stream = NULL;
     return 0;
 }
 
@@ -122,18 +87,12 @@ int close_data_streams()
  */
 int create_new_data_stream(const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *))
 {
-    if (!is_initialized)
-    {
-        _log_error("ERROR: Data streams not initialized\n");
-        return 1;
-    }
-
     if (!_is_stream_name_valid(stream_name, stream_type))
     {
         return 1;
     }
 
-    Data_Stream *new_data_stream = _get_new_stream();
+    Data_Stream *new_data_stream = _add_data_stream();
     if (!new_data_stream)
     {
         _log_error("ERROR: Failed to create new data stream\n");
@@ -152,28 +111,26 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
  */
 void update_streams()
 {
-    if (!is_initialized || !data_streams)
+    if (!head_data_stream)
     {
         _log_error("ERROR: Data streams not initialized or null\n");
         return;
     }
 
     _log_informative("INFO: Calling each data stream\n");
-    // Call the propper protocols for each data stream
-    for (int i = 0; i < started_streams; ++i)
-    {
-        // Skip inactive or un configured streams
-        if (!data_streams[i].is_active || data_streams[i].on_ready == NULL)
-            continue;
 
-        if (data_streams[i].stream_type == WRITE_ONLY_STREAM)
-        {
-            _handle_write_protocol(&data_streams[i]);
+    // linked list version
+    Data_Stream *current = head_data_stream;
+    while (current != NULL) {
+        // Skip inactive or un configured streams
+        if (current->is_active && current->on_ready != NULL) {
+            if (current->stream_type == WRITE_ONLY_STREAM) {
+                _handle_write_protocol(current);
+            } else if (current->stream_type == READ_ONLY_STREAM) {
+                _handle_read_protocol(current);
+            }
         }
-        else if (data_streams[i].stream_type == READ_ONLY_STREAM)
-        {
-            _handle_read_protocol(&data_streams[i]);
-        }
+        current = current->next;
     }
 }
 
@@ -209,28 +166,31 @@ static char *_read_line(Data_Stream *context, char *line_buffer, int max_count)
 /**
  * relallocates more memory for more streams, and sets default values
  */
-static int _add_data_streams(void)
+static Data_Stream * _add_data_stream(void)
 {
-    int old_size = data_streams_size;
-    int new_size = data_streams_size + DATA_STREAM_ARRAY_CHUNK;
-
-    Data_Stream *tmp = realloc(data_streams, sizeof(Data_Stream) * new_size);
+    Data_Stream *tmp = malloc(sizeof(Data_Stream));
     if (!tmp)
     {
         _log_error("ERROR: Failed to reallocate memory for data streams\n");
-        return -1;
+        return NULL;
     }
 
-    data_streams = tmp;
-    data_streams_size = new_size;
-
-    // initialize only the new chunk
-    for (int i = old_size; i < new_size; ++i)
+    if (head_data_stream == NULL)
     {
-        _populate_data_stream_with_defaults(&data_streams[i]);
+        head_data_stream = tmp;
     }
+    else
+    {
+        Data_Stream *current = head_data_stream;
+        while (current->next != NULL)
+        {
+            current = current->next;
+        }
+        current->next = tmp;
+    }
+    _populate_data_stream_with_defaults(tmp);
 
-    return 0;
+    return tmp;
 }
 
 /**
@@ -238,6 +198,7 @@ static int _add_data_streams(void)
  */
 static void _populate_data_stream_with_defaults(Data_Stream *stream)
 {
+    stream->next = NULL;
     stream->is_active = false;
     stream->is_first_write = true;
     stream->stream_type = READ_ONLY_STREAM;
@@ -246,31 +207,12 @@ static void _populate_data_stream_with_defaults(Data_Stream *stream)
     stream->stream_name[0] = '\0';
     stream->flag_file_path[0] = '\0';
     stream->data_file_path[0] = '\0';
+    stream->ack_file_path[0] = '\0';
     stream->send_line = _send_line;
     stream->read_line = _read_line;
 }
 
-/**
- * creates new empty data stream if there is space for it, if not requests for more memory
- * \return Data_stream with default values
- */
-static Data_Stream *_get_new_stream()
-{
-    if (started_streams >= data_streams_size)
-    {
-        if (_add_data_streams())
-        {
-            _log_error("ERROR: Failed to add more data streams\n");
-            return NULL;
-        }
-    }
 
-    // create new data stream
-    int data_stream_index = started_streams++;
-    Data_Stream *new_data_stream = &data_streams[data_stream_index];
-
-    return new_data_stream;
-}
 
 /**
  * Makes sure the name is not over MAX_NAME_LENGTH
@@ -286,15 +228,16 @@ static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stre
         return false;
     }
 
-    // Make sure there is no stream with the same name
-    for (int i = 0; i < data_streams_size; ++i)
+    Data_Stream *current = head_data_stream;
+    while (current != NULL)
     {
         // will return null if stream with same name is found in the list
-        if (data_streams[i].is_active && data_streams[i].stream_type == stream_type && !strcmp(data_streams[i].stream_name, stream_name))
+        if (current->is_active && current->stream_type == stream_type && !strcmp(current->stream_name, stream_name))
         {
             _log_error("ERROR: Stream with the same name and type already exists\n");
             return false; // TODO: log that stream already exists
         }
+        current = current->next;
     }
 
     return true;
@@ -315,7 +258,7 @@ static void _populate_stream_data(Data_Stream *stream, const char *stream_name, 
     snprintf(stream->flag_file_path, sizeof(stream->flag_file_path), "%s%s", stream_name, FLAG_FILE_EXTENSION);
 
     // generating the ack file name
-    snprintf(stream->flag_file_path, sizeof(stream->flag_file_path), "%s%s", stream_name, ACK_FILE_EXTENSION);
+    snprintf(stream->ack_file_path, sizeof(stream->ack_file_path), "%s%s", stream_name, ACK_FILE_EXTENSION);
 
     stream->on_ready = on_ready;
     stream->stream_type = stream_type;
@@ -336,12 +279,13 @@ static void _handle_write_protocol(Data_Stream *stream)
     if (!_was_data_read(stream) && !stream->is_first_write)
         return;
 
-    stream->is_first_write = false;
     if (_open_data_write(stream))
     {
         _log_error("ERROR: Failed to open data file %s for writing\n", stream->data_file_path);
         return;
     }
+
+    stream->is_first_write = false;
 
     _log_informative("INFO: Data file %s opened for writing\n", stream->data_file_path);
     // event calling subscribed function
@@ -433,8 +377,10 @@ static int _open_data_read(Data_Stream *stream)
  */
 static void _close_data(Data_Stream *stream)
 {
-    fclose(stream->data_file_ptr);
-    stream->data_file_ptr = NULL;
+    if (stream->data_file_ptr != NULL) {
+        fclose(stream->data_file_ptr);
+        stream->data_file_ptr = NULL;
+    }
 }
 
 /**
