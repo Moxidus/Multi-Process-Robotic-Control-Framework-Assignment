@@ -24,9 +24,17 @@ OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)
 NAV_PLANNER := $(BIN_DIR)/nav_panner.exe
 SENSOR_LIDAR   := $(BIN_DIR)/sensor_lidar.exe
 
-.PHONY: all clean dirs
+.PHONY: all clean dirs nav_panner sensor_lidar
 
 all: dirs $(NAV_PLANNER) $(SENSOR_LIDAR)
+
+# Build only nav_panner
+nav_panner: dirs $(NAV_PLANNER)
+	@echo Built $(NAV_PLANNER)
+
+# Build only sensor_lidar
+sensor_lidar: dirs $(SENSOR_LIDAR)
+	@echo Built $(SENSOR_LIDAR)
 
 dirs:
 	if not exist $(OBJ_DIR) mkdir $(OBJ_DIR)
