@@ -30,7 +30,7 @@ static Data_Stream *head_data_stream = NULL;
 
 static void _send_line(Data_Stream *context, const char *fmt, ...);
 static char *_read_line(Data_Stream *context, char *line_buffer, int max_count);
-static Data_Stream * _add_data_stream(void);
+static Data_Stream * _allocate_new_data_stream(void);
 static void _populate_data_stream_with_defaults(Data_Stream *stream);
 static bool _is_stream_name_valid(const char *stream_name, enum Stream_type stream_type);
 static void _populate_stream_data(Data_Stream *stream, const char *stream_name, enum Stream_type stream_type, void (*on_ready)(Data_Stream *));
@@ -92,7 +92,7 @@ int create_new_data_stream(const char *stream_name, enum Stream_type stream_type
         return 1;
     }
 
-    Data_Stream *new_data_stream = _add_data_stream();
+    Data_Stream *new_data_stream = _allocate_new_data_stream();
     if (!new_data_stream)
     {
         _log_error("ERROR: Failed to create new data stream\n");
@@ -164,9 +164,10 @@ static char *_read_line(Data_Stream *context, char *line_buffer, int max_count)
 }
 
 /**
- * relallocates more memory for more streams, and sets default values
+ * Creates a new data stream and adds it to the linked list
+ * \return pointer to newly created data stream or NULL on failure
  */
-static Data_Stream * _add_data_stream(void)
+static Data_Stream * _allocate_new_data_stream(void)
 {
     Data_Stream *tmp = malloc(sizeof(Data_Stream));
     if (!tmp)
