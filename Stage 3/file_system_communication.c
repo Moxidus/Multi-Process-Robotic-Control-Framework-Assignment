@@ -26,6 +26,9 @@
 #include "file_system_communication.h"
 
 static bool logging_enabled = false;
+/**
+ * linked list head pointer to the first data stream
+ */
 static Data_Stream *head_data_stream = NULL;
 
 static void _send_line(Data_Stream *context, const char *fmt, ...);
