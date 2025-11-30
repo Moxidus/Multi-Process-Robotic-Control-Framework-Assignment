@@ -23,13 +23,12 @@ bool lock_exists(void) {
     return true;
 }
 
+// writes logs to file
 void record_log(char message[]){ 
-    
+    //displaying the calling of mutex log has started
     printf("Calling mutex_log...\n");
 
-
-
-    // Wait while lock exists
+    // Wait while lock exists if true allow message to be written
     while (lock_exists()) { //  
         sleep_ms(100);  // 100ms
     }
@@ -48,14 +47,13 @@ void record_log(char message[]){
         return ;
     }
 
-
+    //writes the message to system log file
     fprintf(log_file, "\n%s", message);
-
+    //close the system file
     fclose(log_file);
-
     remove("log.lock");
 
-
+    //exit message on mutex loggig file
     printf("Done. Check system_log.txt.\n");
 
 }

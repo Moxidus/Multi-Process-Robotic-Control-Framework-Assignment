@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "file_system_communication.h"
+#include "mutex_logging.h"
 
 //cross-platform sleep
 #ifdef _WIN32
@@ -48,11 +49,14 @@ int main()
     // We create the sending data stream with name sensor_lidar, and pass our handle function to the event handler
     if(create_new_data_stream(MOTOR_STREAM_NAME, READ_ONLY_STREAM, receiving_data)){
         fprintf(stderr, "We failed to create new motor Read stream\n");
+        record_log("[Motor ctrl]: We failed to create new motor Read stream");
         return 1;
     }
 
     fprintf(stdout, "Process C (motor_ctrl) started.\n");
+    record_log("[Motor ctrl]: Process C (motor_ctrl) started.");
     fprintf(stdout, "This process reads from %s using the File System Communication framework\n\n", MOTOR_STREAM_NAME);
+    
 
     // Calling the main loop, program will hold here until its terminated 
     main_loop();
