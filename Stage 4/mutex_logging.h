@@ -2,6 +2,6 @@
 #define Mutex_Logging_H
 
 // write your logging header code here
-
+void record_log(char message[]);
 
 #endif
