@@ -22,8 +22,8 @@ bool lock_exists(void) {
     return true;
 }
 
-
-int main() {
+void record_log(char message[]){ 
+    
     printf("Calling mutex_log...\n");
 
 
@@ -41,14 +41,14 @@ int main() {
     fclose(lock_file);
 
     // Open log file
-    FILE *log_file = fopen("system_log.txt", "w"); 
+    FILE *log_file = fopen("system_log.txt", "a"); 
     if (log_file == NULL) {
         remove("log.lock");
-        return;
+        return ;
     }
 
 
-    fprintf(log_file, "%s", "LOG Message");
+    fprintf(log_file, "\n%s", message);
 
     fclose(log_file);
 
@@ -57,6 +57,19 @@ int main() {
 
     printf("Done. Check system_log.txt.\n");
 
+}
+
+
+
+int main() {
+    
+
+    record_log("test");
+    record_log("test");
+    record_log("test");
+    record_log("test");
+    record_log("test");
+    record_log("test");
 
     getchar(); // stops the command window from closing after its done
     return 0;
