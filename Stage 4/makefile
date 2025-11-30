@@ -52,15 +52,15 @@ dirs:
 	if not exist $(BIN_DIR) mkdir $(BIN_DIR)
 
 # Build nav_panner
-$(NAV_PLANNER): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/nav_panner.o
+$(NAV_PLANNER): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/mutex_logging.o $(OBJ_DIR)/nav_panner.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Build sensor_lidar
-$(SENSOR_LIDAR): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/sensor_lidar.o
+$(SENSOR_LIDAR): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/mutex_logging.o $(OBJ_DIR)/sensor_lidar.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Build motor_ctrl
-$(MOTOR_CTRL): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/motor_ctrl.o
+$(MOTOR_CTRL): $(OBJ_DIR)/file_system_communication.o $(OBJ_DIR)/mutex_logging.o $(OBJ_DIR)/motor_ctrl.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Build test_mutex_logging
