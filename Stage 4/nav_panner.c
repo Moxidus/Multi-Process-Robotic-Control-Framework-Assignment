@@ -46,9 +46,6 @@ int main()
 {
     //seeding RNG
     srand(time(NULL));
-    
-    // Enable logging for File System Communication framework
-    set_file_system_com_framework_logging(true);
 
     // We create the sending data stream with name sensor_lidar, and pass our handle function to the event handler
     if(create_new_data_stream(LIDAR_STREAM_NAME, READ_ONLY_STREAM, receiving_data)){
@@ -100,12 +97,19 @@ void receiving_data(Data_Stream *context)
     //---read the data ---
     fprintf(stdout, "\n\nReading data from %s...\n", context->data_file_path);
     
+    
     printf("--- [DATA START] ---\n");
     while (context->read_line(context, line_buffer, sizeof(line_buffer)) != NULL)
     {
         printf("  %s", line_buffer); // print the line (includes newline)
     }
     printf("--- [DATA END] ---\n");
+
+    
+    // log data
+    char log_message[255];
+    snprintf(log_message, sizeof(log_message), "[Navigation]: Successfully read data from %s.", context->data_file_path);
+    record_log(log_message);
 }
 
 
@@ -129,4 +133,9 @@ void sending_motor_commands(Data_Stream *context)
     context->send_line(context, "speed_right: %.2f\n", speed_right);
     context->send_line(context, "direction: %s\n", direction);
 
+    
+    // log data
+    char log_message[255];
+    snprintf(log_message, sizeof(log_message), "[Navigation]: Successfully wrote data packet %d to %s.", data_counter, context->data_file_path);
+    record_log(log_message);
 }

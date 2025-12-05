@@ -43,9 +43,6 @@ int main()
     //seeding RNG
     srand(time(NULL));
     
-    // Enable logging for File System Communication framework
-    set_file_system_com_framework_logging(true);
-    
     // We create the sending data stream with name sensor_lidar, and pass our handle function to the event handler
     if(create_new_data_stream(MOTOR_STREAM_NAME, READ_ONLY_STREAM, receiving_data)){
         fprintf(stderr, "We failed to create new motor Read stream\n");
@@ -97,4 +94,10 @@ void receiving_data(Data_Stream *context)
         printf("  %s", line_buffer); // print the line (includes newline)
     }
     printf("--- [DATA END] ---\n");
+
+    
+    // log data
+    char log_message[255];
+    snprintf(log_message, sizeof(log_message), "[Motor ctrl]: Successfully read data from %s.", context->data_file_path);
+    record_log(log_message);
 }

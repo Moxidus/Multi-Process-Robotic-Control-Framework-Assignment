@@ -45,9 +45,6 @@ int main()
     //seeding RNG
     srand(time(NULL));
     
-    // Enable logging for File System Communication framework
-    set_file_system_com_framework_logging(true);
-    
     // We create the sending data stream with name sensor_lidar, and pass our handle function to the event handler
     if(create_new_data_stream(LIDAR_STREAM_NAME, WRITE_ONLY_STREAM, sending_data)){
         fprintf(stderr, "We failed to create new stream!\n");
@@ -93,6 +90,7 @@ void sending_data(Data_Stream *context)
     int verifier_code = data_counter * 13 % 1000;
 
     fprintf(stdout, "Writing data packet %d (Verify Code: %d) to %s...\n", data_counter, verifier_code, context->data_file_path);
+    
 
     // generate some LIDAR data
     // angle_min in range -2.0 to -1.0
@@ -112,4 +110,13 @@ void sending_data(Data_Stream *context)
     context->send_line(context, "range_0: %.2f\n", range_0);
     context->send_line(context, "range_1: %.2f\n", range_1);
     context->send_line(context, "range_2: %.2f\n", range_2);
+
+    
+    // log data
+    char log_message[255];
+    snprintf(log_message, sizeof(log_message), "[sensor lidar]: Successfully wrote data packet %d (Verify Code: %d) to %s.", data_counter, verifier_code, context->data_file_path);
+    record_log(log_message);
 }
+
+
+
