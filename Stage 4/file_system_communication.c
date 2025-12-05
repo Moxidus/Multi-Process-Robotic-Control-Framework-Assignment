@@ -175,7 +175,7 @@ static Data_Stream * _allocate_new_data_stream(void)
     Data_Stream *tmp = malloc(sizeof(Data_Stream));
     if (!tmp)
     {
-        _log_error("ERROR: Failed to reallocate memory for data streams\n");
+        _log_error("ERROR: Failed to allocate memory for new data stream\n");
         return NULL;
     }
 
