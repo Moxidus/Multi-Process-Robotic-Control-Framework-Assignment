@@ -9,13 +9,8 @@
  *                           It utilizes callbacks of subscribed functions.
  *                           Single threaded implementation only.
  * TODO:
- * Known issues          :   -Need to check that the codding styles matches the recommendation based on C Style Guidelines
- *                           -Make sure this version of the framework implements all the requested features
- *                           -Test for bugs
- *                           -Need to implement data stream removal function
- *                           -Create data stream should return pointer to created stream for easier management, except there might
- *                           be issue with relocation and use after free, since we are using dynamic array that can be reallocated.
- *                           Consider changing to linked list or fixed max number of streams, to fix it. (or ignore since its already over engineered)
+ * Known issues          :   -Need to implement data stream removal function
+ *                           -Create data stream should return pointer to created stream for easier management.
  *******************************************************************************/
 
 #include <stdlib.h>
@@ -175,7 +170,7 @@ static Data_Stream * _allocate_new_data_stream(void)
     Data_Stream *tmp = malloc(sizeof(Data_Stream));
     if (!tmp)
     {
-        _log_error("ERROR: Failed to reallocate memory for data streams\n");
+        _log_error("ERROR: Failed to allocate memory for new data stream\n");
         return NULL;
     }
 
